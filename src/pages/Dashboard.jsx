@@ -1,20 +1,34 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import axiosInstance from "../api/axiosConfig";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const email = localStorage.getItem("email") || "User";
 
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      navigate("/"); // Redirect to login if not logged in
+    }
+
+    // Prevent back navigation after logout
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function () {
+      window.history.pushState(null, null, window.location.href);
+    };
+  }, [navigate]);
+
   const handleLogout = async () => {
     try {
       await axiosInstance.post("/logout");
 
-      // Clear tokens from localStorage
+      // Clear session storage
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("email");
 
-      // Redirect to Login
-      navigate("/");
+      navigate("/"); // Redirect to login page
     } catch (error) {
       console.error("Logout failed:", error.response?.data || error.message);
     }
